@@ -58,10 +58,10 @@ impl<T, U, E> Service for ClientHandle<T, U, E>
           U: Send + 'static,
           E: Send + 'static,
 {
-    type Req = T;
-    type Resp = U;
+    type Request = T;
+    type Response = U;
     type Error = E;
-    type Fut = Val<U, E>;
+    type Future = Val<U, E>;
 
     fn call(&self, request: T) -> Val<U, E> {
         let (c, val) = future::pair();

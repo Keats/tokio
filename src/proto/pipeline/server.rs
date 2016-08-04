@@ -12,7 +12,7 @@ pub struct Server<S, T>
     run: bool,
     service: S,
     transport: T,
-    in_flight: AwaitQueue<S::Fut>,
+    in_flight: AwaitQueue<S::Future>,
 }
 
 
@@ -33,7 +33,7 @@ impl<S, T> Server<S, T>
 
 impl<S, T, E> Task for Server<S, T>
     where S: Service<Error = E>,
-          T: Transport<In=S::Resp, Out=S::Req>,
+          T: Transport<In=S::Response, Out=S::Request>,
           E: From<Error<T::Error>> + Send + 'static,
 {
     fn tick(&mut self) -> io::Result<Tick> {

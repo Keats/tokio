@@ -31,12 +31,12 @@ use std::sync::{Arc, Mutex};
 ///
 /// ```rust,ignore
 /// impl Service for HelloWorld {
-///     type Req = http::Request;
-///     type Resp = http::Response;
+///     type Request = http::Request;
+///     type Response = http::Response;
 ///     type Error = http::Error;
-///     type Fut = Box<Future<Item = Self::Resp, Error = http::Error>>;
+///     type Future = Box<Future<Item = Self::Response, Error = http::Error>>;
 ///
-///     fn call(&self, req: http::Request) -> Self::Fut {
+///     fn call(&self, req: http::Request) -> Self::Future {
 ///         // Create the HTTP response
 ///         let resp = http::Response::ok()
 ///             .with_body(b"hello world\n");
@@ -104,12 +104,12 @@ use std::sync::{Arc, Mutex};
 ///     where T: Service,
 ///           T::Error: From<Expired>,
 /// {
-///     type Req = T::Req;
-///     type Resp = T::Resp;
+///     type Request = T::Req;
+///     type Response = T::Resp;
 ///     type Error = T::Error;
-///     type Fut = Box<Future<Item = Self::Resp, Error = Self::Error>>;
+///     type Future = Box<Future<Item = Self::Response, Error = Self::Error>>;
 ///
-///     fn call(&self, req: Self::Req) -> Self::Fut {
+///     fn call(&self, req: Self::Request) -> Self::Future {
 ///         let timeout = self.timer.timeout(self.delay)
 ///             .and_then(|timeout| Err(Self::Error::from(timeout)));
 ///
@@ -130,35 +130,35 @@ use std::sync::{Arc, Mutex};
 pub trait Service: Send + 'static {
 
     /// Requests handled by the service.
-    type Req: Send + 'static;
+    type Request: Send + 'static;
 
     /// Responses given by the service.
-    type Resp: Send + 'static;
+    type Response: Send + 'static;
 
     /// Errors produced by the service.
     type Error: Send + 'static;
 
     /// The future response value.
-    type Fut: Future<Item = Self::Resp, Error = Self::Error>;
+    type Future: Future<Item = Self::Response, Error = Self::Error>;
 
     /// Process the request and return the response asynchronously.
-    fn call(&self, req: Self::Req) -> Self::Fut;
+    fn call(&self, req: Self::Request) -> Self::Future;
 }
 
 /// Creates new `Service` values.
 pub trait NewService {
 
     /// Requests handled by the service
-    type Req: Send + 'static;
+    type Request: Send + 'static;
 
     /// Responses given by the service
-    type Resp: Send + 'static;
+    type Response: Send + 'static;
 
     /// Errors produced by the service
     type Error: Send + 'static;
 
     /// The `Service` value created by this factory
-    type Item: Service<Req = Self::Req, Resp = Self::Resp, Error = Self::Error>;
+    type Item: Service<Request = Self::Request, Response = Self::Response, Error = Self::Error>;
 
     /// Create and return a new service value.
     fn new_service(&self) -> io::Result<Self::Item>;
@@ -191,12 +191,12 @@ impl<F, R, S> Service for SimpleService<F, R>
           R: Send + 'static,
           S: IntoFuture,
 {
-    type Req = R;
-    type Resp = S::Item;
+    type Request = R;
+    type Response = S::Item;
     type Error = S::Error;
-    type Fut = S::Future;
+    type Future = S::Future;
 
-    fn call(&self, req: R) -> Self::Fut {
+    fn call(&self, req: R) -> Self::Future {
         (self.f)(req).into_future()
     }
 }
@@ -215,8 +215,8 @@ impl<T> NewService for T
     where T: Service + Clone,
 {
     type Item = T;
-    type Req = T::Req;
-    type Resp = T::Resp;
+    type Request = T::Request;
+    type Response = T::Response;
     type Error = T::Error;
 
     fn new_service(&self) -> io::Result<T> {
